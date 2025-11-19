@@ -71,13 +71,36 @@ elif page == "Portfolio (Erian)":
         st.subheader("Portfolio value (base = 1.0)")
         st.line_chart(portfolio_value)
 
-        st.subheader("Basic statistics")
+        # ----- ADVANCED METRICS -----
+        st.subheader("Performance metrics")
+
+        # We assume 252 trading days per year
+        trading_days_per_year = 252
+
+        avg_daily_ret = float(portfolio_returns.mean())
+        daily_vol = float(portfolio_returns.std())
+
+        annualized_return = (1 + avg_daily_ret) ** trading_days_per_year - 1
+        annualized_vol = daily_vol * np.sqrt(trading_days_per_year)
+
+        if annualized_vol > 0:
+            sharpe_ratio = annualized_return / annualized_vol
+        else:
+            sharpe_ratio = np.nan
+
         col1, col2 = st.columns(2)
 
         with col1:
-            st.write("Average daily return:", float(portfolio_returns.mean()))
-            st.write("Daily volatility:", float(portfolio_returns.std()))
+            st.metric("Average daily return", f"{avg_daily_ret:.4%}")
+            st.metric("Daily volatility", f"{daily_vol:.4%}")
+            st.metric("Annualized return", f"{annualized_return:.2%}")
 
         with col2:
-            st.write("Number of assets:", n_assets)
-            st.write("Time window (days):", days)
+            st.metric("Annualized volatility", f"{annualized_vol:.2%}")
+            st.metric("Sharpe ratio (annualized)", f"{sharpe_ratio:.2f}")
+            st.metric("Number of assets", n_assets)
+
+        # ----- CORRELATION MATRIX -----
+        st.subheader("Correlation matrix between assets")
+        corr = returns.corr()
+        st.dataframe(corr.style.background_gradient(cmap="coolwarm").format("{:.2f}"))
