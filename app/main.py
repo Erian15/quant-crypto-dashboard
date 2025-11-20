@@ -4,6 +4,92 @@ import pandas as pd
 from data_fetch import get_price_history, get_multi_price_history
 
 
+# ---------------------------------------------------------------------
+#                      STYLING (LEVEL 3 - MAX)
+# ---------------------------------------------------------------------
+
+st.set_page_config(page_title="Crypto Quant Dashboard", layout="wide")
+
+st.markdown("""
+    <style>
+
+    /* GLOBAL BACKGROUND */
+    body {
+        background-color: #0E1117;
+    }
+
+    /* SIDEBAR */
+    [data-testid="stSidebar"] {
+        background-color: #11141c;
+        padding-top: 40px;
+    }
+
+    /* SIDEBAR TITLE */
+    [data-testid="stSidebar"] h1, 
+    [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3 {
+        color: white;
+    }
+
+    /* TITLES */
+    h1 {
+        text-align: center !important;
+        color: white !important;
+        margin-bottom: 10px !important;
+        font-size: 42px !important;
+        font-weight: 700;
+    }
+
+    h2, h3, h4 {
+        color: white !important;
+    }
+
+    /* DIVIDER */
+    .divider {
+        border-top: 1px solid #4CAF50;
+        margin-top: 10px;
+        margin-bottom: 20px;
+    }
+
+    /* CARDS */
+    .metric-card {
+        padding: 20px;
+        background-color: #1E1F26;
+        border-radius: 12px;
+        border-left: 6px solid #4CAF50;
+        margin-bottom: 15px;
+    }
+
+    .metric-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: white;
+    }
+
+    .metric-value {
+        font-size: 30px;
+        font-weight: 700;
+        color: #4CAF50;
+        margin-top: -5px;
+    }
+
+    </style>
+""", unsafe_allow_html=True)
+
+
+# Function to create cards
+def metric_card(title, value, color="#4CAF50"):
+    st.markdown(
+        f"""
+        <div class="metric-card" style="border-left: 6px solid {color};">
+            <div class="metric-title">{title}</div>
+            <div class="metric-value" style="color:{color};">{value}</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
 # Max drawdown helper
 def max_drawdown(series):
     cummax = series.cummax()
@@ -11,11 +97,21 @@ def max_drawdown(series):
     return drawdown.min()
 
 
-# Streamlit page config
-st.set_page_config(page_title="Crypto Quant Dashboard", layout="wide")
+# ---------------------------------------------------------------------
+#                             HEADER
+# ---------------------------------------------------------------------
 
-st.title("Crypto Quant Dashboard")
-st.caption("A4 IF - Python, Linux & Git project")
+st.markdown("""
+    <h1>Crypto Quant Dashboard</h1>
+    <div class="divider"></div>
+""", unsafe_allow_html=True)
+
+st.caption("A4 IF — Python, Linux & Git project")
+
+
+# ---------------------------------------------------------------------
+#                             SIDEBAR
+# ---------------------------------------------------------------------
 
 st.sidebar.title("Navigation")
 page = st.sidebar.radio(
@@ -23,15 +119,24 @@ page = st.sidebar.radio(
     ["Home", "Single Asset (Ouiam)", "Portfolio (Erian)"]
 )
 
-# ----- HOME PAGE -----
+
+# ---------------------------------------------------------------------
+#                             HOME PAGE
+# ---------------------------------------------------------------------
+
 if page == "Home":
     st.subheader("Welcome 👋")
-    st.write(
-        "This dashboard is part of the *Python, Linux and Git* course at ESILV. "
-        "It provides single-asset and multi-asset crypto analytics, with basic backtests and risk metrics."
-    )
+    st.write("""
+        This dashboard is part of the *Python, Linux and Git* course at ESILV.
+        It provides single-asset and multi-asset crypto analytics, performance metrics,
+        correlations, and risk analysis for portfolio construction.
+    """)
 
-# ----- SINGLE ASSET PAGE -----
+
+# ---------------------------------------------------------------------
+#                       SINGLE ASSET (OUIAM)
+# ---------------------------------------------------------------------
+
 elif page == "Single Asset (Ouiam)":
     st.subheader("Single Asset Crypto Analysis")
 
@@ -46,29 +151,33 @@ elif page == "Single Asset (Ouiam)":
         st.subheader(f"Daily close price — {asset}")
         st.line_chart(prices["price"])
 
-        # Returns
         returns = prices["price"].pct_change().dropna()
-
-        st.subheader("Performance metrics")
         trading_days_per_year = 252
+
         avg_daily_ret = returns.mean()
         daily_vol = returns.std()
-
         ann_return = (1 + avg_daily_ret) ** trading_days_per_year - 1
         ann_vol = daily_vol * np.sqrt(trading_days_per_year)
         sharpe = ann_return / ann_vol if ann_vol > 0 else np.nan
 
+        st.subheader("Performance metrics")
         col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Average daily return", f"{avg_daily_ret:.4%}")
-            st.metric("Daily volatility", f"{daily_vol:.4%}")
-            st.metric("Annualized return", f"{ann_return:.2%}")
-        with col2:
-            st.metric("Annualized volatility", f"{ann_vol:.2%}")
-            st.metric("Sharpe ratio", f"{sharpe:.2f}")
-            st.metric("Days", days)
 
-# ----- PORTFOLIO PAGE -----
+        with col1:
+            metric_card("Average daily return", f"{avg_daily_ret:.4%}")
+            metric_card("Daily volatility", f"{daily_vol:.4%}")
+            metric_card("Annualized return", f"{ann_return:.2%}")
+
+        with col2:
+            metric_card("Annualized volatility", f"{ann_vol:.2%}")
+            metric_card("Sharpe ratio", f"{sharpe:.2f}", "#FF9800")
+            metric_card("Selected window (days)", days, "#999999")
+
+
+# ---------------------------------------------------------------------
+#                       PORTFOLIO (ERIAN)
+# ---------------------------------------------------------------------
+
 elif page == "Portfolio (Erian)":
     st.subheader("Multi-Asset Crypto Portfolio")
 
@@ -80,16 +189,14 @@ elif page == "Portfolio (Erian)":
     if len(tickers) == 0:
         st.warning("Please select at least one asset.")
     else:
-        # Load multi prices
         prices = get_multi_price_history(tickers, days=days)
 
         st.subheader("Daily close prices")
         st.line_chart(prices)
 
-        # Daily returns
         returns = prices.pct_change().dropna()
 
-        # ----- CUSTOM WEIGHTS -----
+        # ---- CUSTOM WEIGHTS ----
         st.subheader("Portfolio weights")
 
         weights_input = {}
@@ -105,14 +212,13 @@ elif page == "Portfolio (Erian)":
 
         st.write("Normalized weights:", {t: f"{w:.1%}" for t, w in zip(tickers, weights)})
 
-        # Portfolio returns
         portfolio_returns = (returns * weights).sum(axis=1)
         portfolio_value = (1 + portfolio_returns).cumprod()
 
         st.subheader("Portfolio value (base = 1.0)")
         st.line_chart(portfolio_value)
 
-        # ----- METRICS -----
+        # ---- METRICS ----
         st.subheader("Portfolio performance metrics")
 
         trading_days_per_year = 252
@@ -125,16 +231,18 @@ elif page == "Portfolio (Erian)":
         mdd = max_drawdown(portfolio_value)
 
         col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Average daily return", f"{avg_daily_ret:.4%}")
-            st.metric("Daily volatility", f"{daily_vol:.4%}")
-            st.metric("Annualized return", f"{ann_return:.2%}")
-        with col2:
-            st.metric("Annualized volatility", f"{ann_vol:.2%}")
-            st.metric("Sharpe ratio (annualized)", f"{sharpe:.2f}")
-            st.metric("Max drawdown", f"{mdd:.2%}")
 
-        # ----- COMPARISON -----
+        with col1:
+            metric_card("Average daily return", f"{avg_daily_ret:.4%}")
+            metric_card("Daily volatility", f"{daily_vol:.4%}")
+            metric_card("Annualized return", f"{ann_return:.2%}")
+
+        with col2:
+            metric_card("Annualized volatility", f"{ann_vol:.2%}")
+            metric_card("Sharpe ratio", f"{sharpe:.2f}", "#FF9800")
+            metric_card("Max drawdown", f"{mdd:.2%}", "#E53935")
+
+        # ---- COMPARISON ----
         st.subheader("Comparison: Portfolio vs BTC")
 
         if "BTC-USD" in prices.columns:
@@ -144,6 +252,10 @@ elif page == "Portfolio (Erian)":
         else:
             st.info("BTC-USD not selected → comparison unavailable.")
 
-        # ----- CORRELATION -----
-        st.subheader("Correlation matrix between assets")
-        st.dataframe(returns.corr().style.background_gradient(cmap="coolwarm").format("{:.2f}"))
+        # ---- CORRELATION ----
+        st.subheader("Correlation matrix")
+        st.dataframe(
+            returns.corr()
+            .style.background_gradient(cmap="coolwarm")
+            .format("{:.2f}")
+        )
