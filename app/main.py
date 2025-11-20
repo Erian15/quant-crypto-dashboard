@@ -137,10 +137,12 @@ if page == "Home":
 
         <div class="divider"></div>
 
-        <p style='text-align:center; font-size:18px; color:#CCCCCC; max-width:900px; margin:auto;'>
-            This dashboard provides advanced cryptocurrency analytics including single-asset analysis,
-            multi-asset portfolio construction, performance evaluation, correlation analysis,
-            and automated reporting. It was developed as part of the A4 IF course at ESILV.
+        <p style='text-align:center; font-size:18px; color:#CCCCCC; 
+                  max-width:900px; margin:auto;'>
+            This dashboard provides advanced cryptocurrency analytics including 
+            single-asset analysis, multi-asset portfolio construction, 
+            performance evaluation, correlation analysis and automated reporting. 
+            It was developed as part of the A4 IF course at ESILV.
         </p>
 
         <br><br>
@@ -153,8 +155,8 @@ if page == "Home":
                 <h3 style='color:white; text-align:center;'>Erian STANLEY YOGARAJ</h3>
                 <p style='color:#AAAAAA; text-align:center;'>
                     Developer — Portfolio Analysis (Quant B)<br>
-                    Multi-asset modeling, risk metrics, correlations,<br>
-                    automation through Linux and cron.
+                    Multi-asset modeling, risk metrics,<br>
+                    correlations and Linux automation.
                 </p>
             </div>
 
@@ -200,10 +202,11 @@ if page == "Home":
         <br><br>
 
         <p style='text-align:center; color:#777777; font-size:15px;'>
-            Developed for the ESILV A4 IF Python, Linux & Git module — 2024/2025
+            Developed by Erian & Ouiam — ESILV A4 IF — 2024/2025
         </p>
 
     """, unsafe_allow_html=True)
+
 
 
 
