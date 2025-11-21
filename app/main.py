@@ -217,38 +217,130 @@ if page == "Home":
 elif page == "Single Asset (Ouiam)":
     st.subheader("Single Asset Crypto Analysis")
 
-    asset = st.selectbox("Select crypto asset:", ["BTC-USD", "ETH-USD"])
-    days = st.slider("Time window (days):", 30, 365, 180, step=10)
+    # --- Inputs ---
+    asset = st.selectbox("Select crypto asset:", ["BTC-USD", "ETH-USD"], index=0)
 
+    days = st.slider(
+        "Time window (days):",
+        min_value=30, max_value=365, value=180, step=10
+    )
+
+    strategy = st.selectbox(
+        "Select strategy:",
+        ["Buy & Hold", "SMA Crossover", "RSI Strategy"]
+    )
+
+    st.write(" ")
+
+    # Strategy parameters
+    if strategy == "SMA Crossover":
+        sma_short = st.number_input("Short SMA window", min_value=5, max_value=100, value=20)
+        sma_long = st.number_input("Long SMA window", min_value=20, max_value=300, value=100)
+
+    elif strategy == "RSI Strategy":
+        rsi_window = st.number_input("RSI window", min_value=5, max_value=50, value=14)
+        rsi_buy = st.number_input("RSI Buy Threshold", min_value=5, max_value=50, value=30)
+        rsi_sell = st.number_input("RSI Sell Threshold", min_value=50, max_value=95, value=70)
+
+    # --- Load data ---
     prices = get_price_history(asset, days=days)
 
     if prices.empty:
-        st.warning("No data available.")
+        st.warning("No data available for this asset.")
+        st.stop()
+
+    prices["returns"] = prices["price"].pct_change()
+
+    # ------------------------------
+    # 🔥 Strategy Implementations
+    # ------------------------------
+
+    # BUY & HOLD
+    bh_curve = (1 + prices["returns"].fillna(0)).cumprod()
+
+    # SMA CROSSOVER
+    if strategy == "SMA Crossover":
+        df = prices.copy()
+        df["SMA_short"] = df["price"].rolling(sma_short).mean()
+        df["SMA_long"] = df["price"].rolling(sma_long).mean()
+
+        df["signal"] = 0
+        df["signal"] = (df["SMA_short"] > df["SMA_long"]).astype(int)
+        df["position"] = df["signal"].shift(1).fillna(0)
+
+        df["strategy_returns"] = df["position"] * df["returns"]
+        strat_curve = (1 + df["strategy_returns"].fillna(0)).cumprod()
+
+    # RSI STRATEGY
+    elif strategy == "RSI Strategy":
+        df = prices.copy()
+        delta = df["price"].diff()
+
+        gain = delta.clip(lower=0)
+        loss = -delta.clip(upper=0)
+
+        avg_gain = gain.rolling(rsi_window).mean()
+        avg_loss = loss.rolling(rsi_window).mean()
+
+        rs = avg_gain / avg_loss
+        df["RSI"] = 100 - (100 / (1 + rs))
+
+        df["position"] = 0
+        df.loc[df["RSI"] < rsi_buy, "position"] = 1      # BUY
+        df.loc[df["RSI"] > rsi_sell, "position"] = 0     # SELL
+        df["position"] = df["position"].ffill().fillna(0)
+
+        df["strategy_returns"] = df["position"] * df["returns"]
+        strat_curve = (1 + df["strategy_returns"].fillna(0)).cumprod()
+
     else:
-        st.subheader(f"Daily close price — {asset}")
-        st.line_chart(prices["price"])
+        strat_curve = bh_curve  # Buy & Hold by default
 
-        returns = prices["price"].pct_change().dropna()
-        trading_days_per_year = 252
+    # ------------------------------
+    # 📉 Max Drawdown Function
+    # ------------------------------
+    def max_drawdown(series):
+        rolling_max = series.cummax()
+        drawdown = (series - rolling_max) / rolling_max
+        return drawdown.min()
 
-        avg_daily_ret = returns.mean()
-        daily_vol = returns.std()
-        ann_return = (1 + avg_daily_ret) ** trading_days_per_year - 1
-        ann_vol = daily_vol * np.sqrt(trading_days_per_year)
-        sharpe = ann_return / ann_vol if ann_vol > 0 else np.nan
+    mdd = max_drawdown(strat_curve)
 
-        st.subheader("Performance metrics")
-        col1, col2 = st.columns(2)
+    # ------------------------------
+    # 📊 DISPLAY CHART
+    # ------------------------------
+    st.subheader(f"Price vs Strategy — {asset}")
+    st.line_chart(
+        {
+            "Price": prices["price"],
+            "Strategy value": strat_curve
+        }
+    )
 
-        with col1:
-            metric_card("Average daily return", f"{avg_daily_ret:.4%}")
-            metric_card("Daily volatility", f"{daily_vol:.4%}")
-            metric_card("Annualized return", f"{ann_return:.2%}")
+    # ------------------------------
+    # 📈 Performance Metrics
+    # ------------------------------
+    st.subheader("Performance Metrics")
 
-        with col2:
-            metric_card("Annualized volatility", f"{ann_vol:.2%}")
-            metric_card("Sharpe ratio", f"{sharpe:.2f}", "#FF9800")
-            metric_card("Selected window (days)", days, "#999999")
+    trading_days = 252
+    avg_daily = float(prices["returns"].mean())
+    vol_daily = float(prices["returns"].std())
+
+    annual_ret = (1 + avg_daily) ** trading_days - 1
+    annual_vol = vol_daily * np.sqrt(trading_days)
+
+    sharpe = annual_ret / annual_vol if annual_vol > 0 else np.nan
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric("Annualized Return", f"{annual_ret:.2%}")
+        st.metric("Annualized Volatility", f"{annual_vol:.2%}")
+
+    with col2:
+        st.metric("Sharpe Ratio", f"{sharpe:.2f}")
+        st.metric("Max Drawdown", f"{mdd:.2%}")
+
 
 
 # ---------------------------------------------------------------------
