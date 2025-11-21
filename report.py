@@ -13,6 +13,7 @@ def max_drawdown(series):
 def main():
     today = datetime.now().strftime("%Y-%m-%d")
 
+    # Load 1 year of data
     prices = get_multi_price_history(TICKERS, days=365)
     returns = prices.pct_change().dropna()
 
@@ -26,14 +27,18 @@ def main():
         close_price = asset.iloc[-1]
 
         report[t] = {
-            "open": float(open_price),
-            "close": float(close_price),
-            "volatility": float(daily_vol),
-            "max_drawdown": float(mdd),
+            "Open price": float(open_price),
+            "Close price": float(close_price),
+            "Daily volatility": float(daily_vol),
+            "Max drawdown": float(mdd),
         }
 
     df = pd.DataFrame(report).T
-    df.to_csv(f"/home/tkg/daily_report_{today}.csv")
+
+    output_path = f"/home/obous/quant-crypto-dashboard/reports/daily_report_{today}.csv"
+
+    df.to_csv(output_path)
+    print(f"Report generated: {output_path}")
 
 if __name__ == "__main__":
     main()

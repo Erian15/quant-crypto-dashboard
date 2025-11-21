@@ -2,13 +2,20 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 from data_fetch import get_price_history, get_multi_price_history
-
+import time
 
 # ---------------------------------------------------------------------
 #                      STYLING (LEVEL 3 - MAX)
 # ---------------------------------------------------------------------
 
 st.set_page_config(page_title="Crypto Quant Dashboard", layout="wide")
+# Auto-refresh every 5 minutes (300 sec)
+st.markdown("""
+    <meta http-equiv="refresh" content="300">
+""", unsafe_allow_html=True)
+
+
+
 
 st.markdown("""
     <style>
@@ -116,7 +123,7 @@ st.caption("A4 IF — Python, Linux & Git project")
 st.sidebar.title("Navigation")
 page = st.sidebar.radio(
     "Go to:",
-    ["Home", "Single Asset (Ouiam)", "Portfolio (Erian)"]
+    ["Home", "Single Asset (Ouiam)", "Portfolio (Erian)", "Daily Reports (Auto)"]
 )
 
 
@@ -208,6 +215,47 @@ if page == "Home":
     """, unsafe_allow_html=True)
 
 
+# ---------------------------------------------------------------------
+#                       DAILY REPORTS (AUTO)
+# ---------------------------------------------------------------------
+
+elif page == "Daily Reports (Auto)":
+    st.subheader("📄 Daily Automated Reports")
+
+    import os
+
+    reports_dir = "/home/obous/quant-crypto-dashboard/reports"
+
+    if not os.path.exists(reports_dir):
+        st.warning("No reports directory found.")
+        st.stop()
+
+    files = sorted(os.listdir(reports_dir))
+
+    if len(files) == 0:
+        st.info("No reports have been generated yet.")
+        st.stop()
+
+    # List reports
+    st.write("### Available Reports:")
+    for f in files:
+        file_path = f"{reports_dir}/{f}"
+
+        with open(file_path, "rb") as report_file:
+            st.download_button(
+                label=f"Download {f}",
+                data=report_file,
+                file_name=f,
+                mime="text/csv"
+            )
+
+    # Show last report
+    last_report = files[-1]
+    st.write("### 📊 Latest Report")
+    st.write(f"**File:** {last_report}")
+
+    df = pd.read_csv(f"{reports_dir}/{last_report}")
+    st.dataframe(df)
 
 
 # ---------------------------------------------------------------------
@@ -222,25 +270,56 @@ elif page == "Single Asset (Ouiam)":
 
     days = st.slider(
         "Time window (days):",
-        min_value=30, max_value=365, value=180, step=10
+        min_value=30,
+        max_value=365,
+        value=180,
+        step=10,
     )
 
     strategy = st.selectbox(
         "Select strategy:",
-        ["Buy & Hold", "SMA Crossover", "RSI Strategy"]
+        ["Buy & Hold", "SMA Crossover", "RSI Strategy"],
     )
 
     st.write(" ")
 
-    # Strategy parameters
+    # --- Extra parameters depending on strategy ---
+    sma_short = sma_long = None
+    rsi_window = rsi_buy = rsi_sell = None
+
     if strategy == "SMA Crossover":
-        sma_short = st.number_input("Short SMA window", min_value=5, max_value=100, value=20)
-        sma_long = st.number_input("Long SMA window", min_value=20, max_value=300, value=100)
+        sma_short = st.number_input(
+            "Short SMA window",
+            min_value=5,
+            max_value=100,
+            value=20,
+        )
+        sma_long = st.number_input(
+            "Long SMA window",
+            min_value=20,
+            max_value=300,
+            value=100,
+        )
 
     elif strategy == "RSI Strategy":
-        rsi_window = st.number_input("RSI window", min_value=5, max_value=50, value=14)
-        rsi_buy = st.number_input("RSI Buy Threshold", min_value=5, max_value=50, value=30)
-        rsi_sell = st.number_input("RSI Sell Threshold", min_value=50, max_value=95, value=70)
+        rsi_window = st.number_input(
+            "RSI window",
+            min_value=5,
+            max_value=50,
+            value=14,
+        )
+        rsi_buy = st.number_input(
+            "RSI Buy Threshold",
+            min_value=5,
+            max_value=50,
+            value=30,
+        )
+        rsi_sell = st.number_input(
+            "RSI Sell Threshold",
+            min_value=50,
+            max_value=95,
+            value=70,
+        )
 
     # --- Load data ---
     prices = get_price_history(asset, days=days)
@@ -255,27 +334,30 @@ elif page == "Single Asset (Ouiam)":
     # 🔥 Strategy Implementations
     # ------------------------------
 
-    # BUY & HOLD
-    bh_curve = (1 + prices["returns"].fillna(0)).cumprod()
+    df = prices.copy()
+
+    # BUY & HOLD baseline
+    bh_curve = (1 + df["returns"].fillna(0)).cumprod()
+    strat_curve = bh_curve.copy()  # default
+
+    indicator_df = None  # for SMA/RSI visualisation
 
     # SMA CROSSOVER
     if strategy == "SMA Crossover":
-        df = prices.copy()
         df["SMA_short"] = df["price"].rolling(sma_short).mean()
         df["SMA_long"] = df["price"].rolling(sma_long).mean()
 
-        df["signal"] = 0
         df["signal"] = (df["SMA_short"] > df["SMA_long"]).astype(int)
-        df["position"] = df["signal"].shift(1).fillna(0)
+        df["position"] = df["signal"].shift(1).fillna(0)  # trade next day
 
         df["strategy_returns"] = df["position"] * df["returns"]
         strat_curve = (1 + df["strategy_returns"].fillna(0)).cumprod()
 
+        indicator_df = df[["price", "SMA_short", "SMA_long"]]
+
     # RSI STRATEGY
     elif strategy == "RSI Strategy":
-        df = prices.copy()
         delta = df["price"].diff()
-
         gain = delta.clip(lower=0)
         loss = -delta.clip(upper=0)
 
@@ -286,15 +368,14 @@ elif page == "Single Asset (Ouiam)":
         df["RSI"] = 100 - (100 / (1 + rs))
 
         df["position"] = 0
-        df.loc[df["RSI"] < rsi_buy, "position"] = 1      # BUY
-        df.loc[df["RSI"] > rsi_sell, "position"] = 0     # SELL
+        df.loc[df["RSI"] < rsi_buy, "position"] = 1   # BUY
+        df.loc[df["RSI"] > rsi_sell, "position"] = 0  # SELL
         df["position"] = df["position"].ffill().fillna(0)
 
         df["strategy_returns"] = df["position"] * df["returns"]
         strat_curve = (1 + df["strategy_returns"].fillna(0)).cumprod()
 
-    else:
-        strat_curve = bh_curve  # Buy & Hold by default
+        indicator_df = df[["RSI"]]
 
     # ------------------------------
     # 📉 Max Drawdown Function
@@ -307,39 +388,64 @@ elif page == "Single Asset (Ouiam)":
     mdd = max_drawdown(strat_curve)
 
     # ------------------------------
-    # 📊 DISPLAY CHART
+    # 📊 MAIN CHART: Price vs Strategy
     # ------------------------------
     st.subheader(f"Price vs Strategy — {asset}")
     st.line_chart(
         {
-            "Price": prices["price"],
-            "Strategy value": strat_curve
+            "Price": df["price"],
+            "Strategy value": strat_curve,
         }
     )
 
     # ------------------------------
-    # 📈 Performance Metrics
+    # 📈 INDICATOR CHARTS (SMA / RSI)
+    # ------------------------------
+    if strategy == "SMA Crossover" and indicator_df is not None:
+        st.subheader("Moving Averages (SMA)")
+        st.line_chart(
+            {
+                "Price": indicator_df["price"],
+                "SMA Short": indicator_df["SMA_short"],
+                "SMA Long": indicator_df["SMA_long"],
+            }
+        )
+
+    elif strategy == "RSI Strategy" and indicator_df is not None:
+        st.subheader("RSI Indicator")
+        st.line_chart(indicator_df["RSI"])
+
+        st.caption(
+            f"RSI Strategy: BUY when RSI < {rsi_buy}, SELL when RSI > {rsi_sell}."
+        )
+
+    # ------------------------------
+    # 📈 Performance Metrics (cards)
     # ------------------------------
     st.subheader("Performance Metrics")
 
     trading_days = 252
-    avg_daily = float(prices["returns"].mean())
-    vol_daily = float(prices["returns"].std())
+    avg_daily = float(df["returns"].mean())
+    vol_daily = float(df["returns"].std())
 
     annual_ret = (1 + avg_daily) ** trading_days - 1
     annual_vol = vol_daily * np.sqrt(trading_days)
-
     sharpe = annual_ret / annual_vol if annual_vol > 0 else np.nan
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.metric("Annualized Return", f"{annual_ret:.2%}")
-        st.metric("Annualized Volatility", f"{annual_vol:.2%}")
+        metric_card("Annualized Return", f"{annual_ret:.2%}")
+        metric_card("Annualized Volatility", f"{annual_vol:.2%}")
 
     with col2:
-        st.metric("Sharpe Ratio", f"{sharpe:.2f}")
-        st.metric("Max Drawdown", f"{mdd:.2%}")
+        metric_card("Sharpe Ratio", f"{sharpe:.2f}", color="#FF9800")
+        metric_card("Max Drawdown", f"{mdd:.2%}", color="#E53935")
+
+    # (Optionnel) afficher les dernières lignes de la stratégie
+    with st.expander("Show last signals / data"):
+        st.dataframe(df.tail(10))
+
 
 
 
