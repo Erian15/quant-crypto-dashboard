@@ -211,146 +211,104 @@ page = st.sidebar.radio(
 
 if page == "Home":
 
-    st.markdown("""
-        <h1 style='text-align:center; color:white; font-size:50px; font-weight:700;'>
-            🚀 Crypto Quant Dashboard
-        </h1>
+# -----------------------------------------------------------------
+# HERO
+# -----------------------------------------------------------------
 
-        <h3 style='text-align:center; color:#4CAF50; margin-top:-10px;'>
-            Real-time Crypto Analytics • Machine Learning • Quant Finance
-        </h3>
+    st.markdown(
+        "<h1 style='text-align:center; color:white; font-size:48px; font-weight:700;'>"
+        "Crypto Quant Dashboard"
+        "</h1>",
+        unsafe_allow_html=True
+    )
 
-        <br>
+    st.markdown(
+        "<p style='text-align:center; color:#9E9E9E; font-size:18px; margin-top:-10px;'>"
+        "Crypto analytics • Quant strategies • Portfolio optimization"
+        "</p>",
+        unsafe_allow_html=True
+    )
 
-        <p style='text-align:center; color:#CCCCCC; font-size:18px; max-width:850px; margin:auto;'>
-            Welcome to the Crypto Quant Dashboard — a complete analytics platform 
-            developed for the A4 IF Python/Linux/Git project. 
-            Explore single-asset strategies, build optimized portfolios, analyze correlations, 
-            and access automatically generated daily reports.
-        </p>
+    
 
-        <div class="divider"></div>
-    """, unsafe_allow_html=True)
+    st.markdown("<div class='divider'></div>", unsafe_allow_html=True)
 
-    # -----------------------------------------------------------------
-    # 🔍 Quick Overview Cards
-    # -----------------------------------------------------------------
 
-    col1, col2, col3 = st.columns(3)
+    # -----------------------------
+    # QUICK NAV CARDS 
+    # -----------------------------
+    st.markdown("<h3 style='color:white; margin-top:10px;'>Quick Access</h3>", unsafe_allow_html=True)
 
-    with col1:
-        metric_card("Quant A", "Single Asset Analysis", color="#2196F3")
-    with col2:
-        metric_card("Quant B", "Portfolio Optimization", color="#4CAF50")
-    with col3:
-        metric_card("Daily Reports", "Auto-generated", color="#E53935")
+    c1, c2, c3 = st.columns(3)
+
+    with c1:
+        metric_card("Quant A", "Single Asset Strategies (SMA / RSI)", color="#2196F3")
+        st.caption("Go to: **Single Asset (Ouiam)**")
+
+    with c2:
+        metric_card("Quant B", "Portfolio • Correlation • Markowitz", color="#4CAF50")
+        st.caption("Go to: **Portfolio (Erian)**")
+
+    with c3:
+        metric_card("Daily Reports", "CSV reports generated automatically", color="#E53935")
+        st.caption("Go to: **Daily Reports (Auto)**")
 
     st.write("")
 
-    # -----------------------------------------------------------------
-    # 📄 Latest Daily Report Preview
-    # -----------------------------------------------------------------
-
-    st.markdown("<h3 style='color:white;'>📄 Latest Daily Report</h3>", unsafe_allow_html=True)
+    # -----------------------------
+    # LATEST REPORT
+    # -----------------------------
+    st.markdown("<h3 style='color:white;'>Latest Daily Report</h3>", unsafe_allow_html=True)
 
     import os
     reports_dir = "/home/obous/quant-crypto-dashboard/reports"
 
     if os.path.exists(reports_dir):
-        files = sorted(os.listdir(reports_dir))
+        files = sorted([f for f in os.listdir(reports_dir) if f.endswith(".csv")])
         if len(files) > 0:
             last_report = files[-1]
             df = pd.read_csv(f"{reports_dir}/{last_report}")
 
-            st.write(f"**Latest file:** `{last_report}`")
+            top_left, top_right = st.columns([3, 1])
+            with top_left:
+                st.markdown(f"<span style='color:#9E9E9E;'>Latest file:</span> <span style='color:#E0E0E0; font-weight:700;'>{last_report}</span>", unsafe_allow_html=True)
+            with top_right:
+                with open(f"{reports_dir}/{last_report}", "rb") as f:
+                    st.download_button(
+                        "⬇️ Download",
+                        data=f,
+                        file_name=last_report,
+                        mime="text/csv",
+                        use_container_width=True
+                    )
 
-            # Download button
-            with open(f"{reports_dir}/{last_report}", "rb") as f:
-                st.download_button(
-                    "⬇️ Download latest report",
-                    data=f,
-                    file_name=last_report,
-                    mime="text/csv"
-                )
+            # Clean preview (avoid big table)
+            preview = df.copy()
+            preview = preview.drop(columns=["Unnamed: 0"], errors="ignore")
+            st.dataframe(preview, use_container_width=True, height=220)
 
-            # Preview
-            st.dataframe(df.head(), use_container_width=True)
         else:
             st.info("No reports available yet.")
     else:
         st.warning("Reports folder not found.")
 
     st.write("")
-    st.write("")
 
-    # -----------------------------------------------------------------
-    # 👥 Team Section
-    # -----------------------------------------------------------------
+    # -----------------------------
+    # TEAM 
+    # -----------------------------
+    st.markdown("<h3 style='text-align:center; color:white; margin-top:20px;'>Project Team</h3>", unsafe_allow_html=True)
 
-    st.markdown("<h3 style='text-align:center; color:white;'>👥 Project Team</h3>", unsafe_allow_html=True)
+    t1, t2 = st.columns(2)
 
-    colA, colB = st.columns(2)
+    with t1:
+        metric_card("Ouiam BOUSSAID BENCHAARA", "Quant A — Single Asset", color="#2196F3")
 
-    with colA:
-        metric_card(
-            "Ouiam BOUSSAID BENCHAARA",
-            "Single Asset Analysis (Quant A)",
-            color="#2196F3"
-        )
+    with t2:
+        metric_card("Erian STANLEY YOGARAJ", "Quant B — Portfolio", color="#4CAF50")
 
-    with colB:
-        metric_card(
-            "Erian STANLEY YOGARAJ",
-            "Portfolio Optimization (Quant B)",
-            color="#4CAF50"
-        )
+    st.markdown("<p style='text-align:center; color:#777; font-size:14px; margin-top:10px;'>ESILV A4 IF — 2024/2025</p>", unsafe_allow_html=True)
 
-    st.write("")
-    st.markdown("<p style='text-align:center; color:#777; font-size:15px;'>ESILV A4 IF — 2024/2025</p>", unsafe_allow_html=True)
-
-
-
-# ---------------------------------------------------------------------
-#                       DAILY REPORTS (AUTO)
-# ---------------------------------------------------------------------
-
-elif page == "Daily Reports (Auto)":
-    st.subheader(" Daily Automated Reports")
-
-    import os
-
-    reports_dir = "/home/obous/quant-crypto-dashboard/reports"
-
-    if not os.path.exists(reports_dir):
-        st.warning("No reports directory found.")
-        st.stop()
-
-    files = sorted(os.listdir(reports_dir))
-
-    if len(files) == 0:
-        st.info("No reports have been generated yet.")
-        st.stop()
-
-    # List reports
-    st.write("### Available Reports:")
-    for f in files:
-        file_path = f"{reports_dir}/{f}"
-
-        with open(file_path, "rb") as report_file:
-            st.download_button(
-                label=f"Download {f}",
-                data=report_file,
-                file_name=f,
-                mime="text/csv"
-            )
-
-    # Show last report
-    last_report = files[-1]
-    st.write("###  Latest Report")
-    st.write(f"**File:** {last_report}")
-
-    df = pd.read_csv(f"{reports_dir}/{last_report}")
-    st.dataframe(df)
 
 
 # ---------------------------------------------------------------------
@@ -426,7 +384,7 @@ elif page == "Single Asset (Ouiam)":
     prices["returns"] = prices["price"].pct_change()
 
     # ------------------------------
-    # 🔥 Strategy Implementations
+    # Strategy Implementations
     # ------------------------------
 
     df = prices.copy()
@@ -473,7 +431,7 @@ elif page == "Single Asset (Ouiam)":
         indicator_df = df[["RSI"]]
 
     # ------------------------------
-    # 📉 Max Drawdown Function
+    # Max Drawdown Function
     # ------------------------------
     def max_drawdown(series):
         rolling_max = series.cummax()
@@ -483,7 +441,7 @@ elif page == "Single Asset (Ouiam)":
     mdd = max_drawdown(strat_curve)
 
     # ------------------------------
-    # 📊 MAIN CHART: Price vs Strategy
+    # MAIN CHART: Price vs Strategy
     # ------------------------------
     st.subheader(f"Price vs Strategy — {asset}")
     st.line_chart(
@@ -494,7 +452,7 @@ elif page == "Single Asset (Ouiam)":
     )
 
     # ------------------------------
-    # 📈 INDICATOR CHARTS (SMA / RSI)
+    # INDICATOR CHARTS (SMA / RSI)
     # ------------------------------
     if strategy == "SMA Crossover" and indicator_df is not None:
         st.subheader("Moving Averages (SMA)")
@@ -515,13 +473,20 @@ elif page == "Single Asset (Ouiam)":
         )
 
     # ------------------------------
-    # 📈 Performance Metrics (cards)
+    # Performance Metrics (cards)
     # ------------------------------
     st.subheader("Performance Metrics")
 
     trading_days = 252
-    avg_daily = float(df["returns"].mean())
-    vol_daily = float(df["returns"].std())
+
+    # Choose correct returns depending on strategy
+    if strategy == "Buy & Hold":
+        used_returns = df["returns"]
+    else:
+        used_returns = df["strategy_returns"]
+
+    avg_daily = float(used_returns.mean())
+    vol_daily = float(used_returns.std())
 
     annual_ret = (1 + avg_daily) ** trading_days - 1
     annual_vol = vol_daily * np.sqrt(trading_days)
@@ -566,7 +531,7 @@ elif page == "Single Asset (Ouiam)":
 
 
 # ---------------------------------------------------------------------
-#                  PORTFOLIO (ERIAN) — FULL QUANT VERSION
+#                  PORTFOLIO (ERIAN) 
 # ---------------------------------------------------------------------
 
 elif page == "Portfolio (Erian)":
@@ -782,3 +747,46 @@ elif page == "Portfolio (Erian)":
             "portfolio_data.csv",
             "text/csv"
         )
+
+# ---------------------------------------------------------------------
+#                       DAILY REPORTS 
+# ---------------------------------------------------------------------
+
+elif page == "Daily Reports (Auto)":
+    st.subheader(" Daily Automated Reports")
+
+    import os
+
+    reports_dir = "/home/obous/quant-crypto-dashboard/reports"
+
+    if not os.path.exists(reports_dir):
+        st.warning("No reports directory found.")
+        st.stop()
+
+    files = sorted(os.listdir(reports_dir))
+
+    if len(files) == 0:
+        st.info("No reports have been generated yet.")
+        st.stop()
+
+    # List reports
+    st.write("### Available Reports:")
+    for f in files:
+        file_path = f"{reports_dir}/{f}"
+
+        with open(file_path, "rb") as report_file:
+            st.download_button(
+                label=f"Download {f}",
+                data=report_file,
+                file_name=f,
+                mime="text/csv"
+            )
+
+    # Show last report
+    last_report = files[-1]
+    st.write("###  Latest Report")
+    st.write(f"**File:** {last_report}")
+
+    df = pd.read_csv(f"{reports_dir}/{last_report}")
+    st.dataframe(df)
+

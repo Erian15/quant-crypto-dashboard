@@ -26,18 +26,25 @@ It consists of two main analytical components:
 ## 2. Features
 
 ### Quant A – Single Asset (Ouiam)
-- Asset analyzed: BTC-USD
+
+- Assets analyzed: BTC-USD, ETH-USD
 - Daily close price visualization
 - Daily and annualized performance metrics
-- Technical strategies (Buy & Hold, Moving Average Crossover)
+- Technical strategies:
+  - Buy & Hold
+  - SMA Crossover
+  - RSI Strategy
+- Bonus:
+  - 14-day price prediction using linear regression
 - Metrics:
   - Average daily return
-  - Daily/annualized volatility
+  - Daily & annualized volatility
   - Annualized return
   - Sharpe ratio
   - Max drawdown
 
 ### Quant B – Multi-Asset Portfolio (Erian)
+
 - Assets: BTC-USD, ETH-USD, BNB-USD, SOL-USD
 - Multi-asset price visualization
 - Portfolio returns based on user-defined weights
@@ -54,16 +61,17 @@ It consists of two main analytical components:
 ## 3. Project Structure
 
 ```
-quant-crypto-dashboard/
-│
+
 ├── app/
 │   ├── main.py              # Streamlit dashboard
 │   ├── data_fetch.py        # Data retrieval logic
 │
+├── reports/                 # Auto-generated CSV reports
 ├── report.py                # Daily automated report script
-├── run.sh                   # Background execution script (Linux/WSL)
+├── run.sh                   # Background execution script
 ├── requirements.txt         # Python dependencies
 └── README.md
+
 ```
 
 ---
@@ -137,13 +145,14 @@ A daily report is automatically generated at **20:00** using cron.
 ### Cron configuration:
 
 ```
-0 20 * * * /home/tkg/quant-crypto-dashboard/venv/bin/python3 /home/tkg/quant-crypto-dashboard/report.py >> /home/tkg/cron.log 2>&1
+0 20 * * * /home/obous/quant-crypto-dashboard/.venv/bin/python /home/obous/quant-crypto-dashboard/report.py >> /home/obous/quant-crypto-dashboard/reports/cron.log 2>&1
+
 ```
 
 This creates files such as:
 
 ```
-~/daily_report_2025-11-20.csv
+quant-crypto-dashboard/reports/daily_report_YYYY-MM-DD.csv
 ```
 
 The report includes for each asset:
@@ -182,12 +191,14 @@ If Streamlit is running and the port is active, the dashboard is running 24/7.
 ## 8. Team Roles
 
 ### Ouiam – Quant A
+
 - BTC-USD analysis
 - Technical strategies
 - Single-asset performance calculations
 - Streamlit integration of the single-asset module
 
 ### Erian – Quant B
+
 - Multi-asset portfolio design
 - Portfolio performance metrics
 - Correlation analysis
@@ -208,4 +219,3 @@ This project combines:
 - Linux automation (shell + cron)
 
 The result is a complete educational project demonstrating both technical and quantitative finance skills.
-
