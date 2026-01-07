@@ -1,221 +1,91 @@
 # Crypto Quant Dashboard
 
-A quantitative cryptocurrency analysis dashboard built with Python, Streamlit, Git, and Linux.
+Students:
 
-This project was developed as part of the **A4 IF – Python, Linux & Git** module at ESILV.
-It consists of two main analytical components:
+- Erian STANLEY YOGARAJ
+- Ouiam BOUSSAID BENCHAARA
 
-- **Quant A – Single Asset Analysis (Ouiam)**
-- **Quant B – Multi-Asset Portfolio Analysis (Erian)**
+Program: ESILV – A4 IF1
 
----
+Project Overview
 
-## 1. Project Objectives
+The Crypto Quant Dashboard is a quantitative cryptocurrency analysis project developed using Python, Streamlit, Git, and Linux.
 
-- Retrieve historical cryptocurrency data using the yfinance API.
-- Build an interactive dashboard with Streamlit.
-- Implement single-asset analytics and trading strategies.
-- Implement a multi-asset portfolio model with performance metrics.
-- Compute return, volatility, Sharpe ratio, correlation, and max drawdown.
+The goal of this project is to reproduce a realistic quantitative finance workflow: market data is automatically retrieved, analyzed, visualized, and deployed on a Linux environment.
+
+The dashboard is composed of two complementary modules developed collaboratively:
+
+- Quant A – Single Asset Analysis (Ouiam)
+- Quant B – Multi-Asset Portfolio Analysis (Erian)
+
+Both modules are fully integrated into a single interactive Streamlit application.
+
+1. Project Objectives
+
+- Retrieve cryptocurrency market data with automatic refresh.
+- Build an interactive and professional dashboard using Streamlit.
+- Implement single-asset trading strategies and performance analysis.
+- Design a multi-asset portfolio with advanced quantitative metrics.
+- Compute key financial indicators: returns, volatility, Sharpe ratio, correlation, maximum drawdown.
 - Generate an automated daily financial report using Linux cron.
-- Ensure proper Git workflow (branches, commits, collaboration).
-- Deploy the dashboard on a Linux environment with 24/7 uptime.
+- Apply a clean Git collaboration workflow.
+- Deploy the application on Linux with continuous (24/7) execution.
 
----
+2. Features
 
-## 2. Features
-
-### Quant A – Single Asset (Ouiam)
+Quant A – Single Asset Analysis (Ouiam)
 
 - Assets analyzed: BTC-USD, ETH-USD
 - Daily close price visualization
-- Daily and annualized performance metrics
-- Technical strategies:
+- Performance metrics on daily and annualized bases
+- Trading strategies:
   - Buy & Hold
   - SMA Crossover
   - RSI Strategy
-- Bonus:
-  - 14-day price prediction using linear regression
-- Metrics:
-  - Average daily return
-  - Daily & annualized volatility
-  - Annualized return
-  - Sharpe ratio
-  - Max drawdown
+- Bonus: 14-day price prediction using linear regression
+- Metrics: average return, volatility, Sharpe ratio, max drawdown
 
-### Quant B – Multi-Asset Portfolio (Erian)
+Quant B – Multi-Asset Portfolio Analysis (Erian)
 
 - Assets: BTC-USD, ETH-USD, BNB-USD, SOL-USD
-- Multi-asset price visualization
-- Portfolio returns based on user-defined weights
-- Daily and annualized volatility
-- Annualized return
-- Sharpe ratio
-- Max drawdown
-- Correlation matrix between assets
-- Portfolio vs BTC normalized comparison
-- Dynamic weight adjustment in real-time
+- Multi-asset visualization
+- Portfolio construction with manual and risk-based weights
+- Portfolio metrics and correlation analysis
+- Portfolio vs BTC comparison
 
----
+3. Project Structure
 
-## 3. Project Structure
-
-```
-
+quant-crypto-dashboard/
 ├── app/
-│   ├── main.py              # Streamlit dashboard
-│   ├── data_fetch.py        # Data retrieval logic
-│
-├── reports/                 # Auto-generated CSV reports
-├── report.py                # Daily automated report script
-├── run.sh                   # Background execution script
-├── requirements.txt         # Python dependencies
+│ ├── main.py
+│ ├── data_fetch.py
+├── reports/
+├── report.py
+├── run.sh
+├── requirements.txt
 └── README.md
 
-```
+4. Installation
 
----
-
-## 4. Installation
-
-### 4.1 Clone the project
-
-```bash
 git clone https://github.com/Erian15/quant-crypto-dashboard.git
 cd quant-crypto-dashboard
-```
-
-### 4.2 Create and activate virtual environment
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 4.3 Install dependencies
-
-```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-```
 
----
+5. Running the Dashboard
 
-## 5. Running the Dashboard
-
-### Standard execution
-
-```bash
 streamlit run app/main.py
-```
 
-### 24/7 execution on Linux/WSL (using nohup)
-
-1. Make the script executable:
-
-```bash
+Background execution:
 chmod +x run.sh
-```
-
-2. Run it in the background:
-
-```bash
 ./run.sh
-```
 
-The dashboard now runs continuously in background mode.
+6. Daily Automated Report
 
-### Verifying that Streamlit is running
+A daily CSV report is generated automatically at 20:00 using cron.
+Reports are saved in the reports/ directory.
 
-```bash
-ps aux | grep streamlit
-```
+7. Conclusion
 
-### Stopping the dashboard
-
-```bash
-pkill -f streamlit
-```
-
----
-
-## 6. Daily Automated Report (Cron Job)
-
-A daily report is automatically generated at **20:00** using cron.
-
-### Cron configuration:
-
-```
-0 20 * * * /home/obous/quant-crypto-dashboard/.venv/bin/python /home/obous/quant-crypto-dashboard/report.py >> /home/obous/quant-crypto-dashboard/reports/cron.log 2>&1
-
-```
-
-This creates files such as:
-
-```
-quant-crypto-dashboard/reports/daily_report_YYYY-MM-DD.csv
-```
-
-The report includes for each asset:
-
-- Open price
-- Close price
-- Daily volatility
-- Max drawdown
-
----
-
-## 7. Deployment Verification
-
-### Check process
-
-```bash
-ps aux | grep streamlit
-```
-
-### Check port 8501
-
-```bash
-netstat -tulnp | grep 8501
-```
-
-### Check logs
-
-```bash
-tail -f streamlit.log
-```
-
-If Streamlit is running and the port is active, the dashboard is running 24/7.
-
----
-
-## 8. Team Roles
-
-### Ouiam – Quant A
-
-- BTC-USD analysis
-- Technical strategies
-- Single-asset performance calculations
-- Streamlit integration of the single-asset module
-
-### Erian – Quant B
-
-- Multi-asset portfolio design
-- Portfolio performance metrics
-- Correlation analysis
-- Linux deployment (nohup + cron)
-- Automation of daily reporting
-
----
-
-## 9. Summary
-
-This project combines:
-
-- Python programming
-- Financial data processing
-- Portfolio analytics
-- Streamlit dashboard creation
-- Git collaboration workflow
-- Linux automation (shell + cron)
-
-The result is a complete educational project demonstrating both technical and quantitative finance skills.
+This project demonstrates a complete quantitative finance pipeline combining Python, data analysis, visualization, Git collaboration, and Linux automation.
