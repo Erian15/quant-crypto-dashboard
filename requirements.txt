@@ -5,7 +5,7 @@ yfinance
 statsmodels
 scikit-learn
 matplotlib
-seaborn
+seaborn    
 scipy
 python-dateutil
 requests
