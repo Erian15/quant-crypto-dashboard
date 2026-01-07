@@ -12,4 +12,4 @@ nohup "$PROJECT_DIR/.venv/bin/streamlit" run "$PROJECT_DIR/app/main.py" \
     --server.port=8501 \
     > "$PROJECT_DIR/streamlit.log" 2>&1 &
 
-echo "🚀 Crypto Quant Dashboard running in background on port 8501"
+echo " Crypto Quant Dashboard running in background on port 8501"
